@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -20,7 +21,9 @@ var (
 func main() {
 	input := "48-subodh-30-kumar-22-cisco"
 	fmt.Println("inputStr:" + input)
-	fmt.Println(" is StringSpec valid :", testValidate(input))
+	fmt.Println("is StringSpec valid :", testValidate(input))
+	fmt.Println("whole story: " + wholeStory(input))
+	fmt.Println("average of numbers:", averageNumber(input))
 }
 
 // testValidate func is used to check that whether given input string match with strSpecPattern
@@ -61,6 +64,35 @@ func wholeStory(input string) string {
 		wholeStory.WriteString(strings.Split(str, delimiter)[1] + " ")
 	}
 	return strings.TrimSpace(wholeStory.String())
+}
+
+/*
+ func averageNumber
+param: input
+return average of given no in given input string spec.
+Example:
+inputStingSpec: "48-subodh-30-kumar-22-cisco"
+averageOfno : (48+30+22)/3 => 33.3333
+*/
+func averageNumber(input string) float64 {
+	// to recover from panic if any while calculating average of no in given string input  .
+	// if given string input does not match string spec pattern ,there is highly chance of panic.
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Printf("%v while finding avg number for given string: %s\n", r, input)
+		}
+	}()
+	sum := 0
+	index := -1
+	str := ""
+	for index, str = range getStrSlice(input) {
+		numStr := strings.Split(str, delimiter)[0]
+		num, _ := strconv.Atoi(numStr)
+		sum = sum + num
+	}
+	return float64(sum) / float64(index+1)
+
 }
 
 /*
