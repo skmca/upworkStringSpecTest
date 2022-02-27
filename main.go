@@ -38,6 +38,31 @@ func testValidate(input string) bool {
 	return true
 }
 
+/* func wholeStory
+   param: input
+   return: wholeStory as string
+wholeStory string consist of all words in given input string spec.
+Example:
+inputStingSpec: "48-subodh-30-kumar-22-cisco"
+outputstring : subodh kumar cisco
+*/
+func wholeStory(input string) string {
+	// to recover from panic if any while creating whole story.
+	// if given string does not match string spec pattern ,there is highly chance of panic.
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Printf("%v while creating whole story for given string: %s\n", r, input)
+		}
+	}()
+	var wholeStory strings.Builder
+	for _, str := range getStrSlice(input) {
+		strings.Split(str, delimiter)
+		wholeStory.WriteString(strings.Split(str, delimiter)[1] + " ")
+	}
+	return strings.TrimSpace(wholeStory.String())
+}
+
 /*
 func getStrSlice
 param: input
