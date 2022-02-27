@@ -2,20 +2,33 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
 	delimiter = "-"
+	// randomNoMaxRange is used to specify the range of a no used in string spec.
+	randomNoMaxRange = 65536
 	//strPattern is regex for a string that is a sequence of numbers followed by dash followed by text
 	//Example: "48-subodh-30-kumar-22-cisco"
 	strSpecPattern = "^([0-9]+)-([a-zA-Z]+)$"
+	// charSet this is combination of upper and lower case which help creating random alphabet string only.
+	charSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	// subStringSize is used to specify the size of substring in string spec
+	// Example of string spec with subStringSize=3 is "48-subodh-30-kumar-22-cisco"
+	subStringSize = 3
+	// strLengthMaxRange used to specify the substring length range.
+	strLengthMaxRange = 10
 )
 
 var (
 	identifierValidater = regexp.MustCompile(strSpecPattern)
+	charSetRune         = []rune(charSet)
 )
 
 func main() {
@@ -24,6 +37,8 @@ func main() {
 	fmt.Println("is StringSpec valid :", testValidate(input))
 	fmt.Println("whole story: " + wholeStory(input))
 	fmt.Println("average of numbers:", averageNumber(input))
+	fmt.Printf("storySate:")
+	fmt.Println(storyStats(input))
 }
 
 // testValidate func is used to check that whether given input string match with strSpecPattern
@@ -95,6 +110,65 @@ func averageNumber(input string) float64 {
 
 }
 
+/*-
+storyStats  function takes string spec as input and returns
+- the shortest word
+-the longest word
+-the average word length
+-the list (or empty list) of all words from the story that have the length the same as the average length rounded up and down.
+in given input string spec if given string match with string spec pattern.
+Example: "48-subodh-30-kumar-22-cisco" is correct string spec for strSpecPattern where kumar is shortestword,
+subodh is longest word and average of word length is (6+5+5)/3 =5.333 rounded values is 5 hence wordlist is
+[kumar cisco]
+*/
+func storyStats(input string) (shortestWord, longestWord string, avgWordLen float64, wordList []string) {
+	//length of all words.
+	totalWordLenth := 0
+	// count of word in given input string spec
+	var wordCount = 0
+	words := strings.Split(wholeStory(input), " ")
+	for _, word := range words {
+		wordLenth := len(word)
+		// to find out longest word
+		if wordLenth > len(longestWord) {
+			longestWord = word
+		}
+		// to find out shortest word
+		if wordLenth < len(shortestWord) || len(shortestWord) == 0 {
+			shortestWord = word
+		}
+		wordCount++
+		totalWordLenth = totalWordLenth + wordLenth
+	}
+	// to find out ave of words length
+	avgWordLen = float64(totalWordLenth) / float64(wordCount)
+	roundedAvgWordLen := getRoundedValue(avgWordLen)
+	// to filter all words which length is eq to roundedAvgWordLen
+	for _, word := range words {
+		if float64(len(word)) == roundedAvgWordLen {
+			wordList = append(wordList, word)
+		}
+	}
+	return
+}
+
+/*
+func getRoundedValue
+param: n
+return rounded value
+if n is 33.3 then rounded value is 33
+if n is 33.5 then rounded value is 34.
+*/
+func getRoundedValue(n float64) float64 {
+	fractionNO := n - float64(int64(n))
+	if fractionNO >= 0.5 {
+		n = math.Ceil(n)
+	} else {
+		n = math.Floor(n)
+	}
+	return n
+}
+
 /*
 func getStrSlice
 param: input
@@ -104,6 +178,56 @@ Example:
 inputStingSpec: "48-subodh-30-kumar-22-cisco"
 output: [48-subodh 30-kumar 22-cisco]
 */
+
+/*
+func generateStrSpec
+input: flag
+output: string
+if flag is true then return valid string spec for given string spec pattern strSpecPattern otherwise invalid string spec.
+*/
+func generateStrSpec(flag bool) string {
+	strBuilder := strings.Builder{}
+	for i := 0; i < subStringSize; i++ {
+		intNo := getIntRandomNo(randomNoMaxRange)
+		strLen := 0
+		for strLen == 0 {
+			// make sure that str length is not zero.
+			strLen = getIntRandomNo(strLengthMaxRange)
+		}
+		str := getRandomString(strLen)
+		if flag {
+			if i == 0 {
+				strBuilder.WriteString(strconv.Itoa(intNo) + "-" + str)
+			} else {
+				strBuilder.WriteString("-" + strconv.Itoa(intNo) + "-" + str)
+			}
+		} else {
+			// generating wrong string pattern
+			switch strLen % 2 {
+			case 0:
+				strBuilder.WriteString(str + "#")
+			case 1:
+				strBuilder.WriteString("_" + strconv.Itoa(intNo))
+			}
+		}
+	}
+
+	return strBuilder.String()
+}
+func getIntRandomNo(randomNoRange int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(randomNoRange)
+}
+
+func getRandomString(strLength int) string {
+	rand.Seed(time.Now().UnixNano())
+	randString := make([]rune, strLength)
+	for i := 0; i < strLength; i++ {
+		randString[i] = charSetRune[rand.Intn(len(charSet))]
+	}
+	return string(randString)
+}
+
 func getStrSlice(input string) []string {
 	var delimiterCounter = 0
 	return strings.FieldsFunc(input, func(r rune) bool {
